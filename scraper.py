@@ -1,22 +1,61 @@
 #!/usr/bin/python
+# -*- coding: utf8 -*-
+
+post_params_txt = """__EVENTARGUMENT=
+__EVENTTARGET=
+__LASTFOCUS=
+__SCROLLPOSITIONX=0
+__SCROLLPOSITIONY=342
+_searchModule=schodze/cpt
+_searchText=
+_sectionLayoutContainer$ctl00$_calendarApp=nrdi
+_sectionLayoutContainer$ctl00$_calendarLang=
+_sectionLayoutContainer$ctl00$_calendarMonth=7
+_sectionLayoutContainer$ctl00$_calendarYear=2014
+_sectionLayoutContainer$ctl00$_monthSelector=7
+_sectionLayoutContainer$ctl00$_yearSelector=2014
+_sectionLayoutContainer$ctl01$_dateFrom=
+_sectionLayoutContainer$ctl01$_dateFrom$dateInput=
+_sectionLayoutContainer$ctl01$_dateTo=
+_sectionLayoutContainer$ctl01$_dateTo$dateInput=
+_sectionLayoutContainer$ctl01$_meetingNr=
+_sectionLayoutContainer$ctl01$_personKey=
+_sectionLayoutContainer$ctl01$_search=Vyhľadať
+_sectionLayoutContainer$ctl01$_searchIn=new
+_sectionLayoutContainer$ctl01$_termNr=6
+_sectionLayoutContainer$ctl01$_text=
+_sectionLayoutContainer_ctl01__dateFrom_ClientState={"minDateStr":"1/1/1900 0:0:0","maxDateStr":"12/31/2099 0:0:0"}
+_sectionLayoutContainer_ctl01__dateFrom_calendar_AD=[[1900,1,1],[2099,12,30],[2014,7,13]]
+_sectionLayoutContainer_ctl01__dateFrom_calendar_SD=[]
+_sectionLayoutContainer_ctl01__dateFrom_dateInput_ClientState={"enabled":true,"emptyMessage":"","minDateStr":"1/1/1900 0:0:0","maxDateStr":"12/31/2099 0:0:0"}
+_sectionLayoutContainer_ctl01__dateFrom_dateInput_text=
+_sectionLayoutContainer_ctl01__dateTo_ClientState={"minDateStr":"1/1/1900 0:0:0","maxDateStr":"12/31/2099 0:0:0"}
+_sectionLayoutContainer_ctl01__dateTo_calendar_AD=[[1900,1,1],[2099,12,30],[2014,7,13]]
+_sectionLayoutContainer_ctl01__dateTo_calendar_SD=[]
+_sectionLayoutContainer_ctl01__dateTo_dateInput_ClientState={"enabled":true,"emptyMessage":"","minDateStr":"1/1/1900 0:0:0","maxDateStr":"12/31/2099 0:0:0"}
+_sectionLayoutContainer_ctl01__dateTo_dateInput_text=
+_sectionLayoutContainer_ctl01__meetingNr_ClientState={"enabled":true,"emptyMessage":"","minValue":1,"maxValue":200}
+_sectionLayoutContainer_ctl01__meetingNr_text="""
 
 import fileinput
 import itertools
 import requests
-import scraperwiki
+#import scraperwiki
 from bs4 import BeautifulSoup
 from datetime import datetime
 
 url = 'http://www.nrsr.sk/web/default.aspx?sid=schodze%2frozprava'
 
-def get_post_params(file_name):
+def get_post_params():
     """
     Read HTTP POST parameters that we need to put to POST request.
     These were obtained through Firebug.
     """
 
+    global post_params_txt
+
     d = dict()
-    for line in fileinput.input(file_name):
+    for line in post_params_txt.split('\n'):
         key, value = line.rstrip().split('=', 1)
         d[key] = value
     return d
@@ -85,13 +124,13 @@ def parse_html(html, term_nr):
     return data_rows
 
 def save_results(data_rows, nr):
-    if len(data_rows) != 20:
+    if True: #len(data_rows) != 20:
         print "Got {} rows for page #{}".format(len(data_rows), nr)
     for row in data_rows:
-        scraperwiki.sqlite.save(data=row)
+        pass #scraperwiki.sqlite.save(data=row)
 
 if __name__ == "__main__":
-    post_params = get_post_params('post_params.dat')
+    post_params = get_post_params()
     session = requests.session()
 
     # Initial GET request to get __VIEWSTATE and __EVENTVALIDATION
@@ -104,7 +143,7 @@ if __name__ == "__main__":
 
     for term_nr in term_numbers:
         # Read POST parameters and set term number.
-        post_params = get_post_params('post_params.dat')
+        post_params = get_post_params()
         post_params['_sectionLayoutContainer$ctl01$_termNr'] = term_nr
 
         # First search request.
