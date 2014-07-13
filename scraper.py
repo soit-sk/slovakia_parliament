@@ -40,7 +40,7 @@ _sectionLayoutContainer_ctl01__meetingNr_text="""
 import fileinput
 import itertools
 import requests
-#import scraperwiki
+import scraperwiki
 from bs4 import BeautifulSoup
 from datetime import datetime
 
@@ -124,10 +124,10 @@ def parse_html(html, term_nr):
     return data_rows
 
 def save_results(data_rows, nr):
-    if True: #len(data_rows) != 20:
+    if len(data_rows) != 20:
         print "Got {} rows for page #{}".format(len(data_rows), nr)
     for row in data_rows:
-        pass #scraperwiki.sqlite.save(data=row)
+        scraperwiki.sqlite.save(data=row)
 
 if __name__ == "__main__":
     post_params = get_post_params()
