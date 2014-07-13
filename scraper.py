@@ -3,6 +3,7 @@
 import fileinput
 import itertools
 import requests
+import scraperwiki
 from bs4 import BeautifulSoup
 from datetime import datetime
 
@@ -25,6 +26,12 @@ def get_input_value(html, input_id):
     return html.body.find('input', attrs={'id': input_id}).attrs['value']
 
 
+def get_term_numbers(html):
+    attrs = {'id': '_sectionLayoutContainer_ctl01__termNr'}
+    options = html.find('select', attrs=attrs).find_all('option')
+    return [int(option.attrs['value']) for option in options]
+
+
 def set_validation_params(params, html):
     """
     These need to be set for every POST request.
@@ -33,7 +40,7 @@ def set_validation_params(params, html):
     params['__EVENTVALIDATION'] = get_input_value(html, '__EVENTVALIDATION')
 
 
-def parse_html(html):
+def parse_html(html, term_nr):
     """
     Parse HTML for a result page and return list of dicts with data that
     can be saved to the scraperwiki sqlite.
@@ -48,9 +55,12 @@ def parse_html(html):
     for row in rows:
         cols = row.find_all('td')
 
-        data_row = dict()
+        data_row = {'term_nr': term_nr}
 
-        # Date of the speech . E.g.: '4. 4. 2012'
+        # Meeting number, E.g.: '1.'
+        data_row['meeting_number'] = int(cols[0].text.strip().rstrip('.'))
+
+        # Date of the speech. E.g.: '4. 4. 2012'
         date = datetime.strptime(cols[1].text.strip(), "%d. %m. %Y").date()
 
         # Time of the speech. E.g.: '10:03:39 - 10:19:13'
@@ -75,9 +85,10 @@ def parse_html(html):
     return data_rows
 
 def save_results(data_rows, nr):
-    #if len(data_rows) != 20:
-    if True:
+    if len(data_rows) != 20:
         print "Got {} rows for page #{}".format(len(data_rows), nr)
+    for row in data_rows:
+        scraperwiki.sqlite.save(data=row)
 
 if __name__ == "__main__":
     post_params = get_post_params('post_params.dat')
@@ -88,38 +99,45 @@ if __name__ == "__main__":
     if not response.ok:
         raise Exception("Failed to fetch %s" % url)
     html = BeautifulSoup(response.text)
+    # Electoral term numbers.
+    term_numbers = get_term_numbers(html)
 
-    # First search request.
-    params = dict(post_params)
-    set_validation_params(params, html)
-    response = session.post(url, data=params)
-    if not response.ok:
-        raise Exception("Failed to fetch %s" % url)
-    html = BeautifulSoup(response.text)
-    save_results(parse_html(html), 1)
+    for term_nr in term_numbers:
+        # Read POST parameters and set term number.
+        post_params = get_post_params('post_params.dat')
+        post_params['_sectionLayoutContainer$ctl01$_termNr'] = term_nr
 
-    for page_nr in itertools.count(2):
-        # Set basic POST params.
+        # First search request.
         params = dict(post_params)
         set_validation_params(params, html)
-
-        # Specify result page number.
-        params['__EVENTARGUMENT'] = "Page${}".format(page_nr)
-        params['__EVENTTARGET'] = '_sectionLayoutContainer$ctl01$_newDebate'
-
-        # This is only useful for first request, paging doesn't work with it.
-        del params['_sectionLayoutContainer$ctl01$_search']
-
-        # Make a POST request.
         response = session.post(url, data=params)
         if not response.ok:
-            raise Exception("Failed to fetch %s", url)
-
-        # Parse and save data.
+            raise Exception("Failed to fetch %s" % url)
         html = BeautifulSoup(response.text)
-        data = parse_html(html)
-        save_results(data, page_nr)
+        save_results(parse_html(html, term_nr), 1)
 
-        if not data:
-            print "No data for page #{}, ending".format(page_nr)
-            break
+        for page_nr in itertools.count(2):
+            # Set basic POST params.
+            params = dict(post_params)
+            set_validation_params(params, html)
+
+            # Specify result page number.
+            params['__EVENTARGUMENT'] = "Page${}".format(page_nr)
+            params['__EVENTTARGET'] = '_sectionLayoutContainer$ctl01$_newDebate'
+
+            # This is only useful for first request, paging doesn't work with it.
+            del params['_sectionLayoutContainer$ctl01$_search']
+
+            # Make a POST request.
+            response = session.post(url, data=params)
+            if not response.ok:
+                raise Exception("Failed to fetch %s", url)
+
+            # Parse and save data.
+            html = BeautifulSoup(response.text)
+            data = parse_html(html, term_nr)
+            save_results(data, page_nr)
+
+            if not data:
+                print "No data for page #{}, ending".format(page_nr)
+                break
