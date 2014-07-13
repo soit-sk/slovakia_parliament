@@ -127,7 +127,7 @@ def save_results(data_rows, nr):
     if len(data_rows) != 20:
         print "Got {} rows for page #{}".format(len(data_rows), nr)
     for row in data_rows:
-        scraperwiki.sqlite.save(data=row)
+        scraperwiki.sqlite.save(unique_keys=[], data=row)
 
 if __name__ == "__main__":
     post_params = get_post_params()
