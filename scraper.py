@@ -126,6 +126,9 @@ def parse_html(html, term_nr):
 def save_results(data_rows, nr):
     if len(data_rows) != 20:
         print "Got {} rows for page #{}".format(len(data_rows), nr)
+        print data_rows
+    if len(data_rows) == 0:
+        return
     for row in data_rows:
         scraperwiki.sqlite.save(unique_keys=["speech_video"], data=row)
 
