@@ -180,6 +180,8 @@ if __name__ == "__main__":
             data = parse_html(html, term_nr)
             save_results(data, page_nr)
 
+            # TODO:
+            # save page_nr to db variable, so we can continue from previous run
             if not data:
                 print "No data for page #{}, ending".format(page_nr)
-                break
+                return
