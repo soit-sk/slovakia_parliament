@@ -37,7 +37,6 @@ _sectionLayoutContainer_ctl01__dateTo_dateInput_text=
 _sectionLayoutContainer_ctl01__meetingNr_ClientState={"enabled":true,"emptyMessage":"","minValue":1,"maxValue":200}
 _sectionLayoutContainer_ctl01__meetingNr_text="""
 
-import fileinput
 import itertools
 import requests
 import scraperwiki
@@ -45,6 +44,7 @@ from bs4 import BeautifulSoup
 from datetime import datetime
 
 url = 'http://www.nrsr.sk/web/default.aspx?sid=schodze%2frozprava'
+
 
 def get_post_params():
     """
@@ -88,7 +88,7 @@ def parse_html(html, term_nr):
     # Get table rows. Class is used to highlight alternating rows, so
     # get both of them.
     rows = html.body.find_all('tr', attrs={'class': 'tab_zoznam_nalt'}) + \
-           html.body.find_all('tr', attrs={'class': 'tab_zoznam_nonalt'})
+        html.body.find_all('tr', attrs={'class': 'tab_zoznam_nonalt'})
 
     data_rows = []
     for row in rows:
@@ -123,6 +123,7 @@ def parse_html(html, term_nr):
 
     return data_rows
 
+
 def save_results(data_rows, nr):
     if len(data_rows) != 20:
         print "Got {} rows for page #{}".format(len(data_rows), nr)
@@ -132,7 +133,8 @@ def save_results(data_rows, nr):
     for row in data_rows:
         scraperwiki.sqlite.save(unique_keys=["speech_video"], data=row)
 
-if __name__ == "__main__":
+
+def main():
     post_params = get_post_params()
     session = requests.session()
 
@@ -185,3 +187,7 @@ if __name__ == "__main__":
             if not data:
                 print "No data for page #{}, ending".format(page_nr)
                 return
+
+
+if __name__ == "__main__":
+    main()
