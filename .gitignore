@@ -1,2 +1,8 @@
 # Ignore output of scraper
 data.sqlite
+
+# Ignore virtual environments
+envs
+
+# Ignore IDE stuff
+.idea
