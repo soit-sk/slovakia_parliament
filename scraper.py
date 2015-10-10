@@ -142,7 +142,7 @@ def main():
     response = session.get(url)
     if not response.ok:
         raise Exception("Failed to fetch %s" % url)
-    html = BeautifulSoup(response.text)
+    html = BeautifulSoup(response.text, "html.parser")
     # Electoral term numbers.
     term_numbers = get_term_numbers(html)
 
@@ -157,7 +157,7 @@ def main():
         response = session.post(url, data=params)
         if not response.ok:
             raise Exception("Failed to fetch %s" % url)
-        html = BeautifulSoup(response.text)
+        html = BeautifulSoup(response.text, "html.parser")
         save_results(parse_html(html, term_nr), 1)
 
         for page_nr in itertools.count(2):
@@ -178,7 +178,7 @@ def main():
                 raise Exception("Failed to fetch %s", url)
 
             # Parse and save data.
-            html = BeautifulSoup(response.text)
+            html = BeautifulSoup(response.text, "html.parser")
             data = parse_html(html, term_nr)
             save_results(data, page_nr)
 
