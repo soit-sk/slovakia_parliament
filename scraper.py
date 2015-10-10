@@ -10,10 +10,10 @@ _searchModule=schodze/cpt
 _searchText=
 _sectionLayoutContainer$ctl00$_calendarApp=nrdi
 _sectionLayoutContainer$ctl00$_calendarLang=
-_sectionLayoutContainer$ctl00$_calendarMonth=7
-_sectionLayoutContainer$ctl00$_calendarYear=2014
-_sectionLayoutContainer$ctl00$_monthSelector=7
-_sectionLayoutContainer$ctl00$_yearSelector=2014
+_sectionLayoutContainer$ctl00$_calendarMonth=10
+_sectionLayoutContainer$ctl00$_calendarYear=2015
+_sectionLayoutContainer$ctl00$_monthSelector=10
+_sectionLayoutContainer$ctl00$_yearSelector=2015
 _sectionLayoutContainer$ctl01$_dateFrom=
 _sectionLayoutContainer$ctl01$_dateFrom$dateInput=
 _sectionLayoutContainer$ctl01$_dateTo=
@@ -30,7 +30,7 @@ _sectionLayoutContainer_ctl01__dateFrom_calendar_SD=[]
 _sectionLayoutContainer_ctl01__dateFrom_dateInput_ClientState={"enabled":true,"emptyMessage":"","minDateStr":"1/1/1900 0:0:0","maxDateStr":"12/31/2099 0:0:0"}
 _sectionLayoutContainer_ctl01__dateFrom_dateInput_text=
 _sectionLayoutContainer_ctl01__dateTo_ClientState={"minDateStr":"1/1/1900 0:0:0","maxDateStr":"12/31/2099 0:0:0"}
-_sectionLayoutContainer_ctl01__dateTo_calendar_AD=[[1900,1,1],[2099,12,30],[2014,7,13]]
+_sectionLayoutContainer_ctl01__dateTo_calendar_AD=[[1900,1,1],[2099,12,30],[2015,10,10]]
 _sectionLayoutContainer_ctl01__dateTo_calendar_SD=[]
 _sectionLayoutContainer_ctl01__dateTo_dateInput_ClientState={"enabled":true,"emptyMessage":"","minDateStr":"1/1/1900 0:0:0","maxDateStr":"12/31/2099 0:0:0"}
 _sectionLayoutContainer_ctl01__dateTo_dateInput_text=
@@ -87,8 +87,8 @@ def parse_html(html, term_nr):
 
     # Get table rows. Class is used to highlight alternating rows, so
     # get both of them.
-    rows = html.body.find_all('tr', attrs={'class': 'tab_zoznam_nalt'}) + \
-        html.body.find_all('tr', attrs={'class': 'tab_zoznam_nonalt'})
+    rows = html.find_all('tr', attrs={'class': 'tab_zoznam_nalt'}) + \
+        html.find_all('tr', attrs={'class': 'tab_zoznam_nonalt'})
 
     data_rows = []
     for row in rows:
@@ -115,9 +115,23 @@ def parse_html(html, term_nr):
 
         # HTTP links
         links = cols[4].find_all('a')
-        data_row['speech_video'] = links[0].attrs['href']
-        data_row['proceedings_video'] = links[1].attrs['href']
-        data_row['transcript'] = links[2].attrs['href']
+        try:
+            data_row['speech_video'] = links[0].attrs['href']
+        except IndexError:
+            print(u'Meeting no. %s (%s - %s) speech video link for %s has not been found!' %
+                  (data_row['meeting_number'], data_row['time_from'], data_row['time_to'], data_row['member']))
+
+        try:
+            data_row['proceedings_video'] = links[1].attrs['href']
+        except IndexError:
+           print(u'Meeting no. %s (%s - %s) proceedings video link for %s link has not been found!' % \
+                 (data_row['meeting_number'], data_row['time_from'], data_row['time_to'], data_row['member']))
+
+        try:
+            data_row['transcript'] = links[2].attrs['href']
+        except IndexError:
+            print(u'Meeting no. %s (%s - %s) transcript link for %s has not been found!' % \
+                  (data_row['meeting_number'], data_row['time_from'], data_row['time_to'], data_row['member']))
 
         data_rows.append(data_row)
 
@@ -142,7 +156,7 @@ def main():
     response = session.get(url)
     if not response.ok:
         raise Exception("Failed to fetch %s" % url)
-    html = BeautifulSoup(response.text)
+    html = BeautifulSoup(response.text, "html.parser")
     # Electoral term numbers.
     term_numbers = get_term_numbers(html)
 
@@ -157,7 +171,7 @@ def main():
         response = session.post(url, data=params)
         if not response.ok:
             raise Exception("Failed to fetch %s" % url)
-        html = BeautifulSoup(response.text)
+        html = BeautifulSoup(response.text, "html.parser")
         save_results(parse_html(html, term_nr), 1)
 
         for page_nr in itertools.count(2):
@@ -178,7 +192,7 @@ def main():
                 raise Exception("Failed to fetch %s", url)
 
             # Parse and save data.
-            html = BeautifulSoup(response.text)
+            html = BeautifulSoup(response.text, "html.parser")
             data = parse_html(html, term_nr)
             save_results(data, page_nr)
 
