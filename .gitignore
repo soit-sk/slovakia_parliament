@@ -1,6 +1,7 @@
 # Ignore output of scraper
 data.sqlite
 scraperwiki.sqlite
+scraperwiki.sqlite-journal
 
 # Ignore virtual environments
 envs
