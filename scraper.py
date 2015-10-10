@@ -115,9 +115,23 @@ def parse_html(html, term_nr):
 
         # HTTP links
         links = cols[4].find_all('a')
-        data_row['speech_video'] = links[0].attrs['href']
-        data_row['proceedings_video'] = links[1].attrs['href']
-        data_row['transcript'] = links[2].attrs['href']
+        try:
+            data_row['speech_video'] = links[0].attrs['href']
+        except IndexError:
+            print(u'Meeting no. %s (%s - %s) speech video link for %s has not been found!' %
+                  (data_row['meeting_number'], data_row['time_from'], data_row['time_to'], data_row['member']))
+
+        try:
+            data_row['proceedings_video'] = links[1].attrs['href']
+        except IndexError:
+           print(u'Meeting no. %s (%s - %s) proceedings video link for %s link has not been found!' % \
+                 (data_row['meeting_number'], data_row['time_from'], data_row['time_to'], data_row['member']))
+
+        try:
+            data_row['transcript'] = links[2].attrs['href']
+        except IndexError:
+            print(u'Meeting no. %s (%s - %s) transcript link for %s has not been found!' % \
+                  (data_row['meeting_number'], data_row['time_from'], data_row['time_to'], data_row['member']))
 
         data_rows.append(data_row)
 
